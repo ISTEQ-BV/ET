@@ -2,20 +2,27 @@
 #include "et/print.hpp"
 #include "et/math.hpp"
 
-#include <cassert>
 #include <iostream>
 #include <sstream>
+
+bool verify(bool x) {
+    if (!x) {
+        std::cerr << "Fatal error\n";
+        std::exit(1);
+    }
+    return x;
+}
 
 template<typename E>
 bool test_print(const E& e, char const* repr)
 {
     std::ostringstream oss;
-    assert(et::tr::print{oss}(e));
+    verify(et::tr::print{oss}(e));
     std::cout << "Expression: " << oss.str() << '\n';
     std::cout << "Type:       " << et::type_name<E> << '\n';
-    assert(oss.str() == repr);
+    verify(oss.str() == repr);
     std::cout << "Tree:\n";
-    assert(et::tr::debug(std::cout, e));
+    verify((bool)et::tr::debug(std::cout, e));
     return true;
 }
 
@@ -23,7 +30,7 @@ template<typename E, typename V>
 bool test_print_eval(const E& e, char const* repr, const V& v)
 {
     test_print(e, repr);
-    assert(evaluate(e) == v);
+    verify(evaluate(e) == v);
     return true;
 }
 

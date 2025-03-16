@@ -277,18 +277,18 @@ decltype(auto) constexpr transform_matching(E&& e, Tr&& tr) {
                 return detail::copy(e);
             }
             else if constexpr (E1::arity == 1) {
-                return make_expr(e.op,
+                return make_expr(detail::copy(e.op),
                                  transform_matching(e.arg1, std::forward<Tr>(tr))
                                  );
             }
             else if constexpr (E1::arity == 2) {
-                return make_expr(e.op,
+                return make_expr(detail::copy(e.op),
                                  transform_matching(e.arg1, std::forward<Tr>(tr)),
                                  transform_matching(e.arg2, std::forward<Tr>(tr))
                                  );
             }
             else if constexpr (E1::arity == 3) {
-                return make_expr(e.op,
+                return make_expr(detail::copy(e.op),
                                  transform_matching(e.arg1, std::forward<Tr>(tr)),
                                  transform_matching(e.arg2, std::forward<Tr>(tr)),
                                  transform_matching(e.arg3, std::forward<Tr>(tr))

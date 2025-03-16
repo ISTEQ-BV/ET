@@ -171,7 +171,7 @@ inline std::ostream& debug(std::ostream& stream, const expr<Op, Args...>& e, int
 ////////////////////////////////////////////////////////////////////////////////
 
 template<Expr E>
-inline std::ostream& operator<<(std::ostream& s, E&& e) {
+inline std::ostream& operator<<(std::ostream& s, const E& e) {
     tr::print{s, 17}(e);
     return s;
 }
