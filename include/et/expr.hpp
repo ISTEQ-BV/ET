@@ -202,6 +202,9 @@ ET_BINARY_OP(<, op::less);
 ET_BINARY_OP(>=, op::greater_equal);
 ET_BINARY_OP(<=, op::less_equal);
 
+#undef ET_UNARY_OP
+#undef ET_BINARY_OP
+
 template<class A, class B, class C>
     requires Expr<A> || Expr<B> || Expr<C>
 constexpr auto select(A&& a, B&& b, C&& c)

@@ -126,4 +126,8 @@ ET_UNARY_STD_FUNC(isnan);
 ET_UNARY_STD_FUNC(isnormal);
 ET_UNARY_STD_FUNC(signbit);
 
+#undef ET_UNARY_STD_FUNC
+#undef ET_BINARY_STD_FUNC
+#undef ET_TERNARY_STD_FUNC
+
 } // namespace et
