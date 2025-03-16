@@ -130,4 +130,41 @@ ET_UNARY_STD_FUNC(signbit);
 #undef ET_BINARY_STD_FUNC
 #undef ET_TERNARY_STD_FUNC
 
+namespace op {
+
+template <int exp>
+struct ipow {
+    template<typename Arg1>
+    decltype(auto) operator()(Arg1&& arg1) const
+    {
+        if constexpr (exp == 0) {
+            // TODO
+        }
+        else if constexpr (exp == 1) {
+            return arg1;
+        }
+        else if constexpr (exp > 1) {
+            auto tmp = ipow<exp/2>{}(arg1);
+            if constexpr ((exp & 1) == 0) {
+                return tmp * tmp;
+            } else {
+                return tmp * tmp * arg1;
+            }
+        }
+        else if constexpr (exp < 0) {
+            // FIXME
+            return 1.0 / ipow<-exp>{}(arg1);
+        }
+    }
+};
+
+} // namepsace op
+
+template<int exp, class Arg1>
+    requires Expr<Arg1>
+constexpr auto ipow(Arg1&& arg1)
+{
+    return make_expr(op::ipow<exp>{}, std::forward<Arg1>(arg1));
+}
+
 } // namespace et

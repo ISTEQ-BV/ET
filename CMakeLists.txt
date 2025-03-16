@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10.0)
 project(et VERSION 0.1.0 LANGUAGES CXX)
 
 add_library(et
+    include/et/derivative.hpp
     include/et/expr.hpp
     include/et/math.hpp
     include/et/print.hpp
@@ -24,3 +25,11 @@ target_link_libraries(et_test
     PRIVATE et
 )
 target_compile_options(et_test PRIVATE -g3 -Wall -Wextra)
+
+add_executable(derivative_test
+    test/derivative_test.cpp
+)
+target_link_libraries(derivative_test
+    PRIVATE et
+)
+target_compile_options(derivative_test PRIVATE -g3 -Wall -Wextra)
