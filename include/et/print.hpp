@@ -38,9 +38,6 @@ template <> inline constexpr int op_priority<op::logical_or> = 15;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename T>
-inline constexpr auto sym = symbol_v<std::remove_cvref_t<T>>;
-
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +59,7 @@ struct print {
 
     template<typename Op, typename Arg1, typename Arg2, typename Arg3>
     bool operator()(const expr<Op, Arg1, Arg2, Arg3> &e) const {
-        return  (stream << detail::sym<Op> << '(')
+        return  (stream << symbol_v<Op> << '(')
                && print{stream, 17}(e.arg1)
                && (stream << ", ")
                && print{stream, 17}(e.arg2)
@@ -80,7 +77,7 @@ struct print {
             }
 
             bool ok = print{stream, new_prio}(e.arg1)
-                   && (stream << ' ' << detail::sym<Op> << ' ')
+                   && (stream << ' ' << symbol_v<Op> << ' ')
                    && print{stream, new_prio}(e.arg2);
 
             if (ok && new_prio >= priority) {
@@ -89,7 +86,7 @@ struct print {
             return static_cast<bool>(stream);
         }
         else {
-            return  (stream << detail::sym<Op> << '(')
+            return  (stream << symbol_v<Op> << '(')
                    && print{stream, 17}(e.arg1)
                    && (stream << ", ")
                    && print{stream, 17}(e.arg2)
@@ -100,18 +97,18 @@ struct print {
     template<typename Op, typename Arg1>
     bool operator()(const expr<Op, Arg1>& e) const {
         if constexpr (is_prefix_op_v<std::remove_cvref_t<Op>>) {
-            return (stream << detail::sym<Op>)
+            return (stream << symbol_v<Op>)
                 && print{stream, detail::op_priority<Op>}(e.arg1);
         }
         else {
-            return  (stream << detail::sym<Op> << '(')
+            return  (stream << symbol_v<Op> << '(')
                    && print{stream, 17}(e.arg1)
                    && (stream << ')');
         }
     }
 
     template<typename T>
-    bool operator()(const T& value) const {
+    bool operator()(T&& value) const {
         if constexpr (detail::Streamable<T>) {
             return static_cast<bool>(stream << value);
         }
@@ -129,7 +126,7 @@ std::ostream& print_expr_header_impl(std::ostream& s, int indent, std::string_vi
 
 template<typename Op>
 inline std::ostream& print_expr_header(std::ostream& s, int indent) {
-    return print_expr_header_impl(s, indent, et::detail::sym<Op>, type_name<Op>);
+    return print_expr_header_impl(s, indent, et::symbol_v<Op>, type_name<Op>);
 }
 
 std::ostream& print_terminal_impl(std::ostream& stream, int indent, std::string_view type_name);

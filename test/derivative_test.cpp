@@ -59,7 +59,8 @@ void foo() {
     std::cout << "w = " << w << '\n';
     auto dw_dx = derivative(w, x);
     std::cout << "dw/dx = " << dw_dx << '\n';
-    std::cout << "simplified = " << autodiff::transform_to_convergence(dw_dx, propagate_const{}) << '\n';
+    auto simp1 = autodiff::transform_to_convergence(dw_dx, propagate_const{});
+    std::cout << "simplified = " << simp1 << " = " << et::evaluate(simp1) << '\n';
     auto dw_dy = derivative(w, y);
     std::cout << "dw/dy = " << dw_dy << '\n';
 }
@@ -138,85 +139,62 @@ void foo() {
 //    auto p_star = p_l + rho_l * (S_l - un_l) * (S_star - un_l);
 //}
 
-// template <typename T>
-// auto copy(T&& x) -> std::remove_cv_t<std::remove_reference_t<T>>
-// {
-//     return std::forward<T>(x);
-// }
+template<typename T1,
+         typename T2,
+         typename T3,
+         typename T4,
+         typename T5,
+         typename T6,
+         typename T7
+         >
+auto cons_from_prim(const T1& p, const T2& Ux, const T3& Uy, const T4& Uz, const T5& T, const T6& m, const T7& Cv) {
+    auto R = 8.31;
+    auto rho = p * m / (et::detail::copy(R) * T);
+    auto rhoUx = rho * Ux;
+    auto rhoUy = rho * Uy;
+    auto rhoUz = rho * Uz;
+    auto rhoE = rho * (0.5 * (Ux*Ux + Uy*Uy + Uz*Uz) + Cv*T);
+    return std::make_tuple(std::move(rho), std::move(rhoUx), std::move(rhoUy), std::move(rhoUz), std::move(rhoE));
+}
 
-// template<typename T1,
-//          typename T2,
-//          typename T3,
-//          typename T4,
-//          typename T5
-//          >
-// auto cons_from_prim(const T1& p, const T2& Ux, const T3& Uy, const T4& Uz, const T5& T, const double& m, const double& Cv) {
-//     auto R = 8.31;
-//     auto rho = p*copy(m) / (copy(R) * T);
-//     yap::print(std::cout, rho);
-//     auto rhoUx = copy(rho)*Ux;
-//     auto rhoUy = copy(rho)*Uy;
-//     auto rhoUz = copy(rho)*Uz;
-//     auto rhoE = copy(rho)*(0.5*(Ux*Ux + Uy*Uy + Uz*Uz) + Cv*T);
-//     return std::make_tuple(std::move(rho), std::move(rhoUx), std::move(rhoUy), std::move(rhoUz), std::move(rhoE));
-// }
+void test2() {
+    var<0> p(140);
+    var<1> Ux(100);
+    var<2> Uy(0);
+    var<3> Uz(0);
+    var<4> T(300);
+    var<5> mu(0.002);
+    var<6> Cv(1000);
 
-// void test2() {
-//     var<0> p(140);
-//     var<1> Ux(100);
-//     var<2> Uy(0);
-//     var<3> Uz(0);
-//     var<4> T(300);
+    std::cout << "p =  " << p  << '\n';
+    std::cout << "Ux = " << Ux << '\n';
+    std::cout << "Uy = " << Uy << '\n';
+    std::cout << "Uz = " << Uz << '\n';
+    std::cout << "T =  " << T  << '\n';
 
-//     std::cout << "p = ";
-//     yap::print(std::cout, p);
-//     std::cout << "Ux = ";
-//     yap::print(std::cout, Ux);
-//     std::cout << "Uy = ";
-//     yap::print(std::cout, Uy);
-//     std::cout << "Uz = ";
-//     yap::print(std::cout, Uz);
-//     std::cout << "T = ";
-//     yap::print(std::cout, T);
+    auto [rho, rhoUx, rhoUy, rhoUz, rhoE] = cons_from_prim(p, Ux, Uy, Uz, T, mu, Cv);
 
-//     auto [rho, rhoUx, rhoUy, rhoUz, rhoE] = cons_from_prim(p, Ux, Uy, Uz, T, 0.002, 10000);
+    std::cout << "rho   = " << rho   << '\n';
+    std::cout << "rhoUx = " << rhoUx << '\n';
+    std::cout << "rhoUy = " << rhoUy << '\n';
+    std::cout << "rhoUz = " << rhoUz << '\n';
+    std::cout << "rhoE  = " << rhoE  << '\n';
 
-//     std::cout << "rho = ";
-//     yap::print(std::cout, rho);
-//     std::cout << "rhoUx = ";
-//     yap::print(std::cout, rhoUx);
-//     std::cout << "rhoUy = ";
-//     yap::print(std::cout, rhoUy);
-//     std::cout << "rhoUz = ";
-//     yap::print(std::cout, rhoUz);
-//     std::cout << "rhoE = ";
-//     yap::print(std::cout, rhoE);
+    auto drho_dp = autodiff::derivative(rho, p);
+    std::cout << "drho/dp = " << drho_dp << '\n';
 
-//     auto drho_dp = autodiff::derivative(rho, p);
-//     std::cout << "drho/dp = ";
-//     yap::print(std::cout, drho_dp);
-//     //    auto drho_dp1 = yap::transform(drho_dp, autodiff::propagate_const{});
-//     //    std::cout << "drho/dp = ";
-//     //    yap::print(std::cout, drho_dp1);
-//     //    auto drho_dp2 = yap::transform(drho_dp1, autodiff::propagate_const{});
-//     //    std::cout << "drho/dp = ";
-//     //    yap::print(std::cout, drho_dp2);
-//     //    auto drho_dp3 = yap::transform(drho_dp2, autodiff::propagate_const{});
-//     //    std::cout << "drho/dp = ";
-//     //    yap::print(std::cout, drho_dp3);
-//     //    auto drho_dp4 = yap::transform(drho_dp3, autodiff::propagate_const{});
-//     //    std::cout << "drho/dp = ";
-//     //    yap::print(std::cout, drho_dp4);
-//     //    auto drho_dp5 = yap::transform(drho_dp4, autodiff::propagate_const{});
-//     //    std::cout << "drho/dp = ";
-//     //    yap::print(std::cout, drho_dp5);
+    auto drho_dp6 = transform_to_convergence(drho_dp, autodiff::propagate_const{});
+    std::cout << "drho/dp = " << drho_dp6 << " = " << evaluate(drho_dp6) << '\n';
 
-//     auto drho_dp6 = transform_to_convergence(drho_dp, autodiff::propagate_const{});
-//     std::cout << "drho/dp = ";
-//     yap::print(std::cout, drho_dp6);
-// }
+    auto drhoE_dT = autodiff::derivative(rhoE, T);
+    std::cout << "drhoE/dT = " << drhoE_dT << '\n';
+
+    auto drhoE_dT1 = transform_to_convergence(drhoE_dT, autodiff::propagate_const{});
+    std::cout << "drhoE/dT = " << drhoE_dT1 << /*" = " << et::evaluate(drhoE_dT1) <<*/ '\n';
+
+}
 
 int main() {
     foo();
-    // test2();
+    test2();
 }

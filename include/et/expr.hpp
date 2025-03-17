@@ -265,8 +265,9 @@ concept Terminal = !Expr<T>;
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Value is passed as `const T&&`, reference is passed as `const T&`
+//#define PASS(x) static_cast<std::conditional_t<std::is_reference_v<decltype(x)>, decltype(x), const decltype(x)&&>>(x)
 
-#define PASS(x) static_cast<std::conditional_t<std::is_reference_v<decltype(x)>, decltype(x), const decltype(x)&&>>(x)
+#define PASS(x) x
 
 template <typename E, typename Tr>
 decltype(auto) constexpr transform_matching(E&& e, Tr&& tr) {
