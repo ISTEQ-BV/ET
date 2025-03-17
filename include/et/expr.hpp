@@ -126,14 +126,13 @@ constexpr decltype(auto) unwrap(T&& val) {
             return static_cast<std::remove_cvref_t<T>>(val);
         }
     }
-    else {
+    else if constexpr (std::is_reference_v<T> || !std::is_const_v<T>) {
         return std::forward<T>(val);
     }
-}
-
-template <typename... Args>
-constexpr decltype(auto) unwrap(const expr<op::identity, Args...>& e) {
-    return std::forward<decltype(e.arg1)>(e.arg1);
+    else {
+        // for const rvalue ref (const T&&) we make a copy
+        return static_cast<std::remove_const_t<T>>(val);
+    }
 }
 
 template<typename Op, typename... Args>
@@ -265,6 +264,10 @@ concept Terminal = !Expr<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/// Value is passed as `const T&&`, reference is passed as `const T&`
+
+#define PASS(x) static_cast<std::conditional_t<std::is_reference_v<decltype(x)>, decltype(x), const decltype(x)&&>>(x)
+
 template <typename E, typename Tr>
 decltype(auto) constexpr transform_matching(E&& e, Tr&& tr) {
     if constexpr (std::is_invocable_v<Tr, E>) {
@@ -277,22 +280,25 @@ decltype(auto) constexpr transform_matching(E&& e, Tr&& tr) {
                 return detail::copy(e);
             }
             else if constexpr (E1::arity == 1) {
-                return make_expr(detail::copy(e.op),
-                                 transform_matching(e.arg1, std::forward<Tr>(tr))
+                auto ret = make_expr(detail::copy(e.op),
+                                 transform_matching(PASS(e.arg1), std::forward<Tr>(tr))
                                  );
+                return ret;
             }
             else if constexpr (E1::arity == 2) {
-                return make_expr(detail::copy(e.op),
-                                 transform_matching(e.arg1, std::forward<Tr>(tr)),
-                                 transform_matching(e.arg2, std::forward<Tr>(tr))
+                auto ret = make_expr(detail::copy(e.op),
+                                 transform_matching(PASS(e.arg1), std::forward<Tr>(tr)),
+                                 transform_matching(PASS(e.arg2), std::forward<Tr>(tr))
                                  );
+                return ret;
             }
             else if constexpr (E1::arity == 3) {
-                return make_expr(detail::copy(e.op),
-                                 transform_matching(e.arg1, std::forward<Tr>(tr)),
-                                 transform_matching(e.arg2, std::forward<Tr>(tr)),
-                                 transform_matching(e.arg3, std::forward<Tr>(tr))
+                auto ret = make_expr(detail::copy(e.op),
+                                 transform_matching(PASS(e.arg1), std::forward<Tr>(tr)),
+                                 transform_matching(PASS(e.arg2), std::forward<Tr>(tr)),
+                                 transform_matching(PASS(e.arg3), std::forward<Tr>(tr))
                                  );
+                return ret;
             }
         }
         else {
@@ -314,16 +320,16 @@ decltype(auto) constexpr transform_terminals(E&& e, Tr&& tr) {
 
 namespace detail {
 
-template <int i, typename Arg1, typename... Args>
-decltype(auto) constexpr get(Arg1&& arg1, Args&&... args) {
-    if constexpr (i == 0) {
-        return std::forward<Arg1>(arg1);
-    }
-    else {
-        static_assert(i > 0 && i <= sizeof...(Args));
-        return get<i-1>(std::forward<Args>(args)...);
-    }
-}
+// template <int i, typename Arg1, typename... Args>
+// decltype(auto) constexpr get(Arg1&& arg1, Args&&... args) {
+//     if constexpr (i == 0) {
+//         return std::forward<Arg1>(arg1);
+//     }
+//     else {
+//         static_assert(i > 0 && i <= sizeof...(Args));
+//         return get<i-1>(std::forward<Args>(args)...);
+//     }
+// }
 
 template <typename T>
 concept TupleLike = requires () {

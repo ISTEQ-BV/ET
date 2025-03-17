@@ -27,7 +27,7 @@ struct var : et::expr<op::var<i>, T> {
     private:
         friend std::ostream& operator<<(std::ostream& s, const var& v)
         {
-            return s << "(var_" << i << " = " << v.arg1 << ")";
+            return s << "var<" << i << ">(" << v.arg1 << ")";
         }
 };
 
@@ -149,73 +149,73 @@ struct xform_derivative {
     }
 };
 
-// struct propagate_const {
-//     // x + 0 -> x
-//     template <typename LHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::plus>, const LHS& lhs, const zero<T>& /* rhs */) {
-//         return yap::transform(yap::as_expr(lhs), *this);
-//     }
-//     // x - 0 -> x
-//     template <typename LHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::minus>, const LHS& lhs, const zero<T>& /* rhs */) {
-//         return yap::transform(yap::as_expr(lhs), *this);
-//     }
-//     // 0 + x -> 0
-//     template <typename RHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::plus>, const zero<T>& /* lhs */, const RHS& rhs) {
-//         return yap::transform(yap::as_expr(rhs), *this);
-//     }
-//     // 0 + 0 -> 0
-//     template <typename T1, typename T2>
-//     auto operator()(yap::expr_tag<yap::expr_kind::plus>, const zero<T1>& /* lhs */, const zero<T2>& /* rhs */) {
-//         return yap::make_terminal(zero<decltype(std::declval<T1>() + std::declval<T2>())>{});
-//     }
-//     // 0 - 0 -> 0
-//     template <typename T1, typename T2>
-//     auto operator()(yap::expr_tag<yap::expr_kind::minus>, const zero<T1>& /* lhs */, const zero<T2>& /* rhs */) {
-//         return yap::make_terminal(zero<decltype(std::declval<T1>() - std::declval<T2>())>{});
-//     }
-//     // 0 * 0 -> 0
-//     template <typename T1, typename T2>
-//     auto operator()(yap::expr_tag<yap::expr_kind::multiplies>, const zero<T1>& /* lhs */, const zero<T2>& /* rhs */) {
-//         return yap::make_terminal(zero<decltype(std::declval<T1>() * std::declval<T2>())>{});
-//     }
-//     // x * 0 -> 0
-//     template <typename LHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::multiplies>, const LHS& /* lhs */, const zero<T>& /* rhs */) {
-//         return yap::make_terminal(zero<unknown_type>{});
-//     }
-//     // x * 1 -> x
-//     template <typename LHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::multiplies>, const LHS& lhs, const one<T>& /* rhs */) {
-//         return yap::transform(yap::as_expr(lhs), *this);
-//     }
-//     // 0 * x -> 0
-//     template <typename RHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::multiplies>, const zero<T>& /* lhs */, const RHS& /* rhs */) {
-//         return yap::make_terminal(zero<unknown_type>{});
-//     }
-//     // 1 * x -> x
-//     template <typename RHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::multiplies>, const one<T>& /* lhs */, const RHS& rhs) {
-//         return yap::transform(yap::as_expr(rhs), *this);
-//     }
-//     // 1 * 1 -> 1
-//     template <typename T1, typename T2>
-//     auto operator()(yap::expr_tag<yap::expr_kind::multiplies>, const one<T1>& /* lhs */, const one<T2>& /* rhs */) {
-//         return yap::make_terminal(one<decltype(std::declval<T1>() * std::declval<T2>())>{});
-//     }
-//     // 1 / 1 -> 1
-//     template <typename T1, typename T2>
-//     auto operator()(yap::expr_tag<yap::expr_kind::divides>, const one<T1>& /* lhs */, const one<T2>& /* rhs */) {
-//         return yap::make_terminal(one<decltype(std::declval<T1>() / std::declval<T2>())>{});
-//     }
-//     // 0 / x -> 0
-//     template <typename RHS, typename T>
-//     auto operator()(yap::expr_tag<yap::expr_kind::divides>, const zero<T>& /* lhs */, const RHS& /* rhs */) {
-//         return yap::make_terminal(zero<unknown_type>{});
-//     }
-// };
+struct propagate_const {
+    // x + 0 -> x
+    template <typename LHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::plus, LHS, zero<T>>& e) {
+        return et::transform_matching(e.arg1, *this);
+    }
+    // x - 0 -> x
+    template <typename LHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::minus, LHS, zero<T>>& e) {
+        return et::transform_matching(e.arg1, *this);
+    }
+    // 0 + x -> x
+    template <typename RHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::plus, zero<T>, RHS>& e) {
+        return et::transform_matching(e.arg2, *this);
+    }
+    // 0 + 0 -> 0
+    template <typename T1, typename T2>
+    decltype(auto) operator()(const et::expr<et::op::plus, zero<T1>, zero<T2>>& /* e */) {
+        return zero<decltype(std::declval<T1>() + std::declval<T2>())>();
+    }
+    // 0 - 0 -> 0
+    template <typename T1, typename T2>
+    decltype(auto) operator()(const et::expr<et::op::minus, zero<T1>, zero<T2>>& /* e */) {
+        return zero<decltype(std::declval<T1>() - std::declval<T2>())>();
+    }
+    // 0 * 0 -> 0
+    template <typename T1, typename T2>
+    decltype(auto) operator()(const et::expr<et::op::multiplies, zero<T1>, zero<T2>>& /* e */) {
+        return zero<decltype(std::declval<T1>() * std::declval<T2>())>();
+    }
+    // x * 0 -> 0
+    template <typename LHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::multiplies, LHS, zero<T>>& /* e */) {
+        return zero<unknown_type>();
+    }
+    // x * 1 -> x
+    template <typename LHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::multiplies, LHS, one<T>>& e) {
+        return et::transform_matching(e.arg1, *this);
+    }
+    // 0 * x -> 0
+    template <typename RHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::multiplies, zero<T>, RHS>& /* e */) {
+        return zero<unknown_type>();
+    }
+    // 1 * x -> x
+    template <typename RHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::multiplies, one<T>, RHS>& e) {
+        return et::transform_matching(e.arg2, *this);
+    }
+    // 1 * 1 -> 1
+    template <typename T1, typename T2>
+    decltype(auto) operator()(const et::expr<et::op::multiplies, one<T1>, one<T2>>& /* e */) {
+        return one<decltype(std::declval<T1>() * std::declval<T2>())>();
+    }
+    // 1 / 1 -> 1
+    template <typename T1, typename T2>
+    decltype(auto) operator()(const et::expr<et::op::divides, one<T1>, one<T2>>& /* e */) {
+        return one<decltype(std::declval<T1>() / std::declval<T2>())>();
+    }
+    // 0 / x -> 0
+    template <typename RHS, typename T>
+    decltype(auto) operator()(const et::expr<et::op::divides, one<T>, RHS>& /* e */) {
+        return zero<unknown_type>();
+    }
+};
 
 template<int i, typename T, typename E>
 auto derivative(const E& e) {
@@ -227,11 +227,11 @@ auto derivative(const E& e, const var<i, T>& /*v*/) {
     return xform_derivative<i, T>{}(e);
 }
 
-template <typename Expr, typename Transform>
-auto transform_to_convergence(Expr&& e, Transform&& transform)
+template <typename E, typename Transform>
+auto transform_to_convergence(const E& e, Transform&& transform)
 {
-    auto transformed = transform(std::move(e));
-    if constexpr (std::is_same_v<std::remove_reference_t<decltype(e)>, std::remove_reference_t<decltype(transformed)>>) {
+    auto transformed = et::transform_matching(std::move(e), transform);
+    if constexpr (std::is_same_v<std::remove_cvref_t<decltype(e)>, std::remove_cvref_t<decltype(transformed)>>) {
         return transformed;
     }
     else {

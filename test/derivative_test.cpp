@@ -6,9 +6,6 @@
 
 using namespace autodiff;
 
-template <typename T>
-struct print;
-
 void foo() {
     var<0> x(1.0);
     var<1> y(2);
@@ -22,35 +19,49 @@ void foo() {
     std::cout << "dx/dy = " << derivative(x, y) << " = " << evaluate(derivative(x, y)) << '\n';
     std::cout << "dy/dx = " << derivative(y, x) << " = " << evaluate(derivative(y, x)) << '\n';
     std::cout << "dy/dy = " << derivative(y, y) << " = " << evaluate(derivative(y, y)) << '\n';
+    std::cout << '\n';
 
     auto z = x * t + y + x * y;
     std::cout << "z = " << z << '\n';
+    std::cout << "type_name(z) = " << et::type_name<decltype(z)> << '\n';
+    std::cout << '\n';
 
     auto dz_dx = derivative(z, x);
     std::cout << "dz/dx = " << dz_dx << '\n';
-    // auto s1 = yap::transform(dz_dx, propagate_const{});
-    // std::cout << "s1 = ";
-    // yap::print(std::cout, s1);
-    // auto s2 = yap::transform(s1, propagate_const{});
-    // std::cout << "s2 = ";
-    // yap::print(std::cout, s2);
+    std::cout << "type_name(dz/dx) = " << et::type_name<decltype(dz_dx)> << '\n';
+    std::cout << '\n';
 
-    //print<typeof d> b;
+    auto z1 = et::transform_matching(z, propagate_const{});
+    std::cout << "z1 = " << z1 << " = " << evaluate(z1) << '\n';
+    std::cout << "type_name(z1) = " << et::type_name<decltype(z1)> << '\n';
+    std::cout << '\n';
 
-    //    assert(yap::evaluate(derivative<0>(z)) == 1.0);
-    //    assert(z.derivative(y).value() == 1.0);
-    //    assert(z.derivative(t).value() == 0.0);
+    auto s1 = et::transform_matching(dz_dx, propagate_const{});
+    std::cout << "s1 = " << s1 /*<< " = " << evaluate(s1) */ << '\n';
+    std::cout << "type_name(s1) = " << et::type_name<decltype(s1)> << '\n';
+    std::cout << '\n';
 
-    //    return z.value();
+    auto s2 = et::transform_matching(s1, propagate_const{});
+    std::cout << "s2 = " << s2 << " = " << evaluate(s2) << '\n';
+    std::cout << "type_name(s2) = " << et::type_name<decltype(s2)> << '\n';
+    std::cout << '\n';
+
+    auto s3 = et::transform_matching(s2, propagate_const{});
+    std::cout << "s2 = " << s3 << " = " << evaluate(s3) << '\n';
+    std::cout << "type_name(s2) = " << et::type_name<decltype(s3)> << '\n';
+    std::cout << '\n';
+
+    std::cout << "simplified = " << autodiff::transform_to_convergence(dz_dx, propagate_const{}) << '\n';
+    std::cout << "type_name(simplified) = " << et::type_name<decltype(autodiff::transform_to_convergence(dz_dx, propagate_const{}))> << '\n';
+    std::cout << '\n';
 
     auto w = x + 3;
     std::cout << "w = " << w << '\n';
     auto dw_dx = derivative(w, x);
     std::cout << "dw/dx = " << dw_dx << '\n';
+    std::cout << "simplified = " << autodiff::transform_to_convergence(dw_dx, propagate_const{}) << '\n';
     auto dw_dy = derivative(w, y);
     std::cout << "dw/dy = " << dw_dy << '\n';
-    // std::cout << "simplified = ";
-    // yap::print(std::cout, yap::transform(dw_dx, propagate_const{}));
 }
 
 //template<
