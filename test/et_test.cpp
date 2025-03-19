@@ -55,13 +55,13 @@ void test_placeholders() {
     et::tr::print{std::cout}(e2);
     std::cout << '\n';
 
-    auto f [[maybe_unused]] = evaluate(replace_placeholders(e1, std::make_tuple(2, 3, 5)));
+    auto f = et::apply(e1, std::make_tuple(2, 3, 5));
 
     if (f != 1) {
         std::cout << "Error\n";
     }
 
-    auto g [[maybe_unused]] = evaluate_with(e1, 2, 3, 5);
+    auto g = invoke(e1, 2, 3, 5);
 
     if (g != 1) {
         std::cout << "Error\n";

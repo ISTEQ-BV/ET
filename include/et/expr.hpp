@@ -355,8 +355,13 @@ constexpr decltype(auto) replace_placeholders(E&& e, const Tuple& arguments) {
 }
 
 template <typename E, typename... Args>
-constexpr decltype(auto) evaluate_with(E&& e, Args&&... args) {
+constexpr decltype(auto) invoke(E&& e, Args&&... args) {
     return evaluate(replace_placeholders(e, std::forward_as_tuple(std::forward<Args>(args)...)));
+}
+
+template <typename E, typename Tuple>
+constexpr decltype(auto) apply(E&& e, Tuple&& t) {
+    return evaluate(replace_placeholders(e, std::forward<Tuple>(t)));
 }
 
 } // namespace ET
