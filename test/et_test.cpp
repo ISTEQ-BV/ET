@@ -1,9 +1,11 @@
 #include "et/expr.hpp"
 #include "et/print.hpp"
 #include "et/math.hpp"
+#include "et/graphviz.hpp"
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 bool verify(bool x) {
     if (!x) {
@@ -86,4 +88,8 @@ int main() {
     test_print_eval(sqrt(et::make_terminal(4.0)), "sqrt(4)", 2.0);
 
     test_placeholders();
+
+    using namespace std::placeholders;
+    std::ofstream dot("expr.dot");
+    et::write_dot_graph(dot, (et::make_terminal(_1) + _2) * _3 + _4);
 }

@@ -5,6 +5,7 @@ project(et VERSION 0.1.0 LANGUAGES CXX)
 add_library(et
     include/et/derivative.hpp
     include/et/expr.hpp
+    include/et/graphviz.hpp
     include/et/math.hpp
     include/et/print.hpp
     include/et/type_name.hpp
