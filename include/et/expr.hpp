@@ -119,7 +119,7 @@ template <typename T>
 constexpr decltype(auto) unwrap(T&& val) {
     if constexpr (detail::is_expr<std::remove_cvref_t<T>>) {
         if constexpr (detail::is_expr_kind<op::identity, std::remove_cvref_t<T>>) {
-            return std::forward<decltype(T::arg1)>(val.arg1);
+            return std::forward<decltype(std::remove_cvref_t<T>::arg1)>(val.arg1);
         }
         else {
             // expressions are returned by copy
@@ -145,6 +145,17 @@ template<typename T>
 constexpr auto make_terminal(T&& val)
 {
     return expr{op::identity(), std::forward<T>(val)};
+}
+
+template<typename T>
+constexpr auto as_expr(T&& val)
+{
+    if constexpr(detail::is_expr<std::remove_cvref_t<T>>) {
+        return val;
+    }
+    else {
+        return expr{op::identity(), std::forward<T>(val)};
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
