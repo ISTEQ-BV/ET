@@ -68,6 +68,9 @@ void test_placeholders() {
     if (g != 1) {
         std::cout << "Error\n";
     }
+
+    std::ofstream dot("expr.dot");
+    et::write_dot_graph(dot, (et::make_terminal(_1) + _2) * _3 + _4);
 }
 
 int main() {
@@ -88,8 +91,4 @@ int main() {
     test_print_eval(sqrt(et::make_terminal(4.0)), "sqrt(4)", 2.0);
 
     test_placeholders();
-
-    using namespace std::placeholders;
-    std::ofstream dot("expr.dot");
-    et::write_dot_graph(dot, (et::make_terminal(_1) + _2) * _3 + _4);
 }

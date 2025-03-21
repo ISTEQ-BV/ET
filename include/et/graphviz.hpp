@@ -27,7 +27,7 @@ std::ostream& write_dot_nodes(std::ostream& s, const et::expr<Op, Args...>& e, c
     }
     if constexpr (sizeof...(Args) > 2) {
         s << "    " << prefix << " -> " << (prefix + "_3") << " ;\n";
-        write_dot_nodes(s, e.arg2, prefix + "_3");
+        write_dot_nodes(s, e.arg3, prefix + "_3");
     }
 
     return s;
