@@ -12,7 +12,7 @@ namespace op {
     template <int i>
     struct var {
         template <typename T>
-        decltype(auto) operator()(T&& x) const {
+        constexpr decltype(auto) operator()(T&& x) const {
             return std::forward<T>(x);
         }
     };
@@ -24,11 +24,11 @@ struct var : et::expr<op::var<i>, T> {
         : et::expr<op::var<i>, T>({}, x)
     {}
 
-    private:
-        friend std::ostream& operator<<(std::ostream& s, const var& v)
-        {
-            return s << "var<" << i << ">(" << v.arg1 << ")";
-        }
+private:
+    friend std::ostream& operator<<(std::ostream& s, const var& v)
+    {
+        return s << "var<" << i << ">(" << v.arg1 << ")";
+    }
 };
 
 } // namespace autodiff
