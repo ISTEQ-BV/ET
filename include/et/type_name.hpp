@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Ilya Popov
 #ifndef TYPE_NAME_HPP
 #define TYPE_NAME_HPP
 
@@ -5,8 +7,6 @@
 // answer by https://stackoverflow.com/users/1593077/einpoklum
 // CC-BY-SA 4.0 https://stackoverflow.com/help/licensing
 
-// This next line assumes C++17; otherwise, replace it with
-// your own string view implementation
 #include <string_view>
 #if __cplusplus >= 202002L
 #  include <source_location>

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Ilya Popov
+
 #include "et/print.hpp"
 
 std::ostream &et::tr::detail::print_expr_header_impl(std::ostream &s, int indent, std::string_view symbol, std::string_view type_name) {

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Ilya Popov
+
 #include "et/expr.hpp"
 #include "et/print.hpp"
 #include "et/math.hpp"
