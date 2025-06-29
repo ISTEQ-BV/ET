@@ -3,7 +3,7 @@ ET
 
 General purpose expression templates library for C++20.
 
-Intended mostly for CFD and otgher HPC applications. 
+Intended mostly for CFD and other HPC applications. 
 
 Building
 --------
@@ -25,8 +25,14 @@ Option one: use cmake `add_subdirectory` assuming you have downloaded ET source 
 
     add_subdirectory(external/et)
 
+then link your executable to `et` library
+
     add_executable(my_executable)
     target_link_library(my_executable PRIVATE et)
+
+Usage
+-----
+
 
 
 Compatibility and requirements
