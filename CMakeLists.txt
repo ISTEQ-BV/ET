@@ -11,6 +11,7 @@ add_library(et
     include/et/type_name.hpp
 
     src/print.cpp
+    include/et/placeholders.hpp
 )
 target_include_directories(et PUBLIC
     include/
@@ -25,7 +26,7 @@ add_executable(et_test
 target_link_libraries(et_test
     PRIVATE et
 )
-target_compile_options(et_test PRIVATE -g3 -Wall -Wextra -fdiagnostics-color=always -fmax-errors=1)
+target_compile_options(et_test PRIVATE -g3 -Wall -Wextra -fdiagnostics-color=always -Wfatal-errors)
 
 add_executable(derivative_test
     test/derivative_test.cpp
@@ -33,4 +34,4 @@ add_executable(derivative_test
 target_link_libraries(derivative_test
     PRIVATE et
 )
-target_compile_options(derivative_test PRIVATE -g3 -Wall -Wextra -fdiagnostics-color=always -fmax-errors=1)
+target_compile_options(derivative_test PRIVATE -g3 -Wall -Wextra -fdiagnostics-color=always -Wfatal-errors)

@@ -6,79 +6,10 @@
 #include "type_name.hpp"
 
 #include <functional>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 
 namespace et {
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename Op, typename... Args>
-struct expr;
-
-////////////////////////////////////////////////////////////////////////////////
-
-namespace detail {
-
-template <typename T>
-inline constexpr bool is_expr = false;
-
-template <typename Op, typename... Args>
-inline constexpr bool is_expr<expr<Op, Args...>> = true;
-
-template <typename Op, typename T>
-inline constexpr bool is_expr_kind = false;
-
-template <typename Op, typename... Args>
-inline constexpr bool is_expr_kind<Op, expr<Op, Args...>> = true;
-
-} // namespace detail
-
-template <typename T>
-concept Expr = detail::is_expr<std::remove_cvref_t<T>>;
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename Op>
-struct expr<Op> {
-    [[no_unique_address]] Op op;
-
-    static constexpr int arity = 0;
-};
-
-template <typename Op, typename Arg1>
-struct expr<Op, Arg1> {
-    [[no_unique_address]] Op op;
-    [[no_unique_address]] Arg1 arg1;
-
-    static constexpr int arity = 1;
-};
-
-template <typename Op, typename Arg1, typename Arg2>
-struct expr<Op, Arg1, Arg2> {
-    [[no_unique_address]] Op op;
-    [[no_unique_address]] Arg1 arg1;
-    [[no_unique_address]] Arg2 arg2;
-
-    static constexpr int arity = 2;
-};
-
-template <typename Op, typename Arg1, typename Arg2, typename Arg3>
-struct expr<Op, Arg1, Arg2, Arg3> {
-    [[no_unique_address]] Op op;
-    [[no_unique_address]] Arg1 arg1;
-    [[no_unique_address]] Arg2 arg2;
-    [[no_unique_address]] Arg3 arg3;
-
-    static constexpr int arity = 3;
-};
-
-// CTAD
-template <typename Op, typename... Args>
-expr(Op&& op, Args&&... args) -> expr<Op, Args...>;
-
-////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -118,25 +49,105 @@ struct select {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+template <typename Op, typename... Args>
+struct expr;
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+template <typename T>
+inline constexpr bool is_expr = false;
+
+template <typename Op, typename... Args>
+inline constexpr bool is_expr<expr<Op, Args...>> = true;
+
+template <typename Op, typename T>
+inline constexpr bool is_expr_kind = false;
+
+template <typename Op, typename... Args>
+inline constexpr bool is_expr_kind<Op, expr<Op, Args...>> = true;
+
+} // namespace detail
+
+template <typename T>
+concept Expr = detail::is_expr<std::remove_cvref_t<T>>;
+
+////////////////////////////////////////////////////////////////////////////////
+
+// nullary expression represents a terminal expression
+template <typename Arg>
+struct expr<Arg> {
+    [[no_unique_address]] Arg arg;
+};
+
+template <typename Op, typename Arg1>
+struct expr<Op, Arg1> {
+    [[no_unique_address]] Op op;
+    [[no_unique_address]] Arg1 arg1;
+};
+
+template <typename Op, typename Arg1, typename Arg2>
+struct expr<Op, Arg1, Arg2> {
+    [[no_unique_address]] Op op;
+    [[no_unique_address]] Arg1 arg1;
+    [[no_unique_address]] Arg2 arg2;
+};
+
+template <typename Op, typename Arg1, typename Arg2, typename Arg3>
+struct expr<Op, Arg1, Arg2, Arg3> {
+    [[no_unique_address]] Op op;
+    [[no_unique_address]] Arg1 arg1;
+    [[no_unique_address]] Arg2 arg2;
+    [[no_unique_address]] Arg3 arg3;
+};
+
+// CTAD
+template <typename Op, typename... Args>
+expr(Op&& op, Args&&... args) -> expr<Op, Args...>;
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace detail {
+
+template <typename T>
+constexpr auto copy(T&& x) {
+    return std::forward<T>(x);
+}
+
+} // manespace detail
+
+////////////////////////////////////////////////////////////////////////////////
+
 template <typename T>
 constexpr decltype(auto) unwrap(T&& val) {
     if constexpr (detail::is_expr<std::remove_cvref_t<T>>) {
-        if constexpr (detail::is_expr_kind<op::identity, std::remove_cvref_t<T>>) {
-            return std::forward<decltype(std::remove_cvref_t<T>::arg1)>(val.arg1);
-        }
-        else {
-            // expressions are returned by copy
-            return static_cast<std::remove_cvref_t<T>>(val);
-        }
-    }
-    else if constexpr (std::is_reference_v<T> || !std::is_const_v<T>) {
-        return std::forward<T>(val);
+        // expressions are returned by copy
+        return detail::copy(std::forward<T>(val));
     }
     else {
-        // for const rvalue ref (const T&&) we make a copy
-        return static_cast<std::remove_const_t<T>>(val);
+        return std::forward<T>(val);
     }
 }
+
+// terminals are unwrapped
+// references are passed as is
+// values are copied
+template <typename Arg>
+constexpr decltype(auto) unwrap(const expr<Arg>& e) {
+    if constexpr (std::is_reference_v<Arg>) {
+        return e.arg;
+    }
+    else {
+        return detail::copy(e.arg);
+    }
+};
+template <typename Arg>
+constexpr decltype(auto) unwrap(expr<Arg>&& val) {
+    return std::move(val).arg;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 template<typename Op, typename... Args>
 constexpr auto make_expr(Op&& op, Args&&... args)
@@ -145,19 +156,13 @@ constexpr auto make_expr(Op&& op, Args&&... args)
 }
 
 template<typename T>
-constexpr auto make_terminal(T&& val)
-{
-    return expr{op::identity(), std::forward<T>(val)};
-}
-
-template<typename T>
 constexpr auto as_expr(T&& val)
 {
-    if constexpr(detail::is_expr<std::remove_cvref_t<T>>) {
-        return val;
+    if constexpr (detail::is_expr<std::remove_cvref_t<T>>) {
+        return std::forward<T>(val);
     }
     else {
-        return expr{op::identity(), std::forward<T>(val)};
+        return expr{std::forward<T>(val)};
     }
 }
 
@@ -175,7 +180,7 @@ inline constexpr bool is_prefix_op_v = false;
 template<Expr A> \
 constexpr auto operator op( A&& a ) \
 { \
-    return make_expr(fn(), std::forward<A>(a)); \
+    return expr(fn{}, unwrap(std::forward<A>(a))); \
 } \
 template <> inline constexpr bool is_prefix_op_v<fn> = true; \
 template <> inline constexpr std::string_view symbol_v<fn> = #op;
@@ -188,7 +193,7 @@ template<class A, class B> \
 requires Expr<A> || Expr<B> \
 constexpr auto operator op( A&& a, B&& b ) \
 { \
-    return make_expr(fn(), std::forward<A>(a), std::forward<B>(b)); \
+    return expr(fn{}, unwrap(std::forward<A>(a)), unwrap(std::forward<B>(b))); \
 } \
 template <> inline constexpr bool is_infix_op_v<fn> = true; \
 template <> inline constexpr std::string_view symbol_v<fn> = #op;
@@ -222,7 +227,7 @@ template<class A, class B, class C>
     requires Expr<A> || Expr<B> || Expr<C>
 constexpr auto select(A&& a, B&& b, C&& c)
 {
-    return make_expr(op::select{}, std::forward<A>(a), std::forward<B>(b), std::forward<C>(c));
+    return expr(op::select{}, unwrap(std::forward<A>(a)), unwrap(std::forward<B>(b)), unwrap(std::forward<C>(c)));
 }
 template <> inline constexpr std::string_view symbol_v<op::select> = "select";
 
@@ -236,9 +241,9 @@ constexpr decltype(auto) evaluate(Arg&& arg) {
     return std::forward<Arg>(arg);
 }
 
-template<typename Op>
-constexpr decltype(auto) evaluate(const expr<Op> &e) {
-    return e.op();
+template<typename Arg>
+constexpr decltype(auto) evaluate(const expr<Arg> &e) {
+    return e.arg;
 }
 
 template<typename Op, typename Arg1>
@@ -263,13 +268,7 @@ using evaluation_result_t = decltype(evaluate(std::declval<const E&>()));
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
 namespace detail {
-
-template <typename T>
-auto copy(T&& x) {
-    return x;
-}
 
 template <typename T>
 concept Terminal = !Expr<T>;
@@ -278,46 +277,51 @@ concept Terminal = !Expr<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// Value is passed as `const T&&`, reference is passed as `const T&`
-//#define PASS(x) static_cast<std::conditional_t<std::is_reference_v<decltype(x)>, decltype(x), const decltype(x)&&>>(x)
+namespace detail {
 
-#define PASS(x) x
+template<typename T>
+constexpr inline int arity = -1;
+
+template<typename Op, typename... Args>
+constexpr inline int arity<expr<Op, Args...>> = sizeof...(Args);
+
+} // namespace detail
 
 template <typename E, typename Tr>
-decltype(auto) constexpr transform_matching(E&& e, Tr&& tr) {
-    if constexpr (std::is_invocable_v<Tr, E>) {
-        return std::forward<Tr>(tr)(std::forward<E>(e));
+decltype(auto) constexpr transform_matching(const E& e, Tr&& tr) {
+    if constexpr (std::is_invocable_v<Tr&, const E&>) {
+        return tr(e);
     }
     else {
         using E1 = std::remove_cvref_t<E>;
         if constexpr (Expr<E1>) {
-            if constexpr (E1::arity == 0) {
+            if constexpr (detail::arity<E1> == 0) {
                 return detail::copy(e);
             }
-            else if constexpr (E1::arity == 1) {
-                auto ret = make_expr(detail::copy(e.op),
-                                 transform_matching(PASS(e.arg1), std::forward<Tr>(tr))
-                                 );
-                return ret;
+            else if constexpr (detail::arity<E1> == 1) {
+                return expr(e.op,
+                            transform_matching(e.arg1, tr)
+                            );
             }
-            else if constexpr (E1::arity == 2) {
-                auto ret = make_expr(detail::copy(e.op),
-                                 transform_matching(PASS(e.arg1), std::forward<Tr>(tr)),
-                                 transform_matching(PASS(e.arg2), std::forward<Tr>(tr))
-                                 );
-                return ret;
+            else if constexpr (detail::arity<E1> == 2) {
+                return expr(e.op,
+                            transform_matching(e.arg1, tr),
+                            transform_matching(e.arg2, tr)
+                            );
             }
-            else if constexpr (E1::arity == 3) {
-                auto ret = make_expr(detail::copy(e.op),
-                                 transform_matching(PASS(e.arg1), std::forward<Tr>(tr)),
-                                 transform_matching(PASS(e.arg2), std::forward<Tr>(tr)),
-                                 transform_matching(PASS(e.arg3), std::forward<Tr>(tr))
-                                 );
-                return ret;
+            else if constexpr (detail::arity<E1> == 3) {
+                return expr(e.op,
+                            transform_matching(e.arg1, tr),
+                            transform_matching(e.arg2, tr),
+                            transform_matching(e.arg3, tr)
+                            );
+            }
+            else {
+                static_assert(false, "Unknown arity");
             }
         }
         else {
-            return std::forward<E>(e);
+            return e;
         }
     }
 }
@@ -332,50 +336,5 @@ decltype(auto) constexpr transform_terminals(E&& e, Tr&& tr) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-namespace detail {
-
-// template <int i, typename Arg1, typename... Args>
-// decltype(auto) constexpr get(Arg1&& arg1, Args&&... args) {
-//     if constexpr (i == 0) {
-//         return std::forward<Arg1>(arg1);
-//     }
-//     else {
-//         static_assert(i > 0 && i <= sizeof...(Args));
-//         return get<i-1>(std::forward<Args>(args)...);
-//     }
-// }
-
-template <typename T>
-concept TupleLike = requires () {
-    std::tuple_size<T>::value;
-};
-
-template <typename T>
-concept Placeholder = (std::is_placeholder_v<T> > 0);
-
-template <typename T>
-concept PlaceholderOrRef = (std::is_placeholder_v<std::remove_cvref_t<T>> > 0);
-
-} // namespace detail
-
-////////////////////////////////////////////////////////////////////////////////
-
-template <typename E, detail::TupleLike Tuple>
-constexpr decltype(auto) replace_placeholders(E&& e, const Tuple& arguments) {
-    return transform_matching(e, [&] (detail::PlaceholderOrRef auto&& terminal) {
-        return std::get<std::is_placeholder_v<std::remove_cvref_t<decltype(terminal)>> - 1>(arguments);
-    });
-}
-
-template <typename E, typename... Args>
-constexpr decltype(auto) invoke(E&& e, Args&&... args) {
-    return evaluate(replace_placeholders(e, std::forward_as_tuple(std::forward<Args>(args)...)));
-}
-
-template <typename E, typename Tuple>
-constexpr decltype(auto) apply(E&& e, Tuple&& t) {
-    return evaluate(replace_placeholders(e, std::forward<Tuple>(t)));
-}
 
 } // namespace ET

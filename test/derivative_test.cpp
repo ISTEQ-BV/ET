@@ -10,9 +10,9 @@
 using namespace autodiff;
 
 void foo() {
-    var<0> x(1.0);
-    var<1> y(2);
-    double t(5);
+    auto x = var<0>(1.0);
+    auto y = var<1>(2);
+    double t = 5;
 
     std::cout << "x = " << x << '\n';
     std::cout << "y = " << y << '\n';
@@ -161,13 +161,13 @@ auto cons_from_prim(const T1& p, const T2& Ux, const T3& Uy, const T4& Uz, const
 }
 
 void test2() {
-    var<0> p(140);
-    var<1> Ux(100);
-    var<2> Uy(0);
-    var<3> Uz(0);
-    var<4> T(300);
-    var<5> mu(0.002);
-    var<6> Cv(1000);
+    auto p = var<0>(140);
+    auto Ux = var<1>(100);
+    auto Uy = var<2>(0);
+    auto Uz = var<3>(0);
+    auto T = var<4>(300);
+    auto mu = var<5>(0.002);
+    auto Cv = var<6>(1000);
 
     std::cout << "p =  " << p  << '\n';
     std::cout << "Ux = " << Ux << '\n';

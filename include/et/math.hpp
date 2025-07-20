@@ -21,7 +21,7 @@ struct fn { \
 template<Expr Arg> \
     constexpr auto fn( Arg&& arg ) \
 { \
-    return make_expr(op::fn(), std::forward<Arg>(arg)); \
+    return expr(op::fn{}, unwrap(std::forward<Arg>(arg))); \
 } \
 template <> inline constexpr std::string_view symbol_v<op::fn> = #fn;
 
@@ -40,7 +40,7 @@ template<class Arg1, class Arg2> \
 requires Expr<Arg1> || Expr<Arg2> \
     constexpr auto fn( Arg1&& arg1, Arg2&& arg2) \
 { \
-        return make_expr(op::fn(), std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)); \
+    return expr(op::fn{}, unwrap(std::forward<Arg1>(arg1)), unwrap(std::forward<Arg2>(arg2))); \
 } \
 template <> inline constexpr std::string_view symbol_v<op::fn> = #fn;
 
@@ -59,7 +59,7 @@ template<class Arg1, class Arg2, class Arg3> \
 requires Expr<Arg1> || Expr<Arg2> || Expr<Arg3> \
     constexpr auto fn( Arg1&& arg1, Arg2&& arg2, Arg3&& arg3) \
 { \
-        return make_expr(op::fn(), std::forward<Arg1>(arg1), std::forward<Arg2>(arg2), std::forward<Arg3>(arg3)); \
+    return expr(op::fn{}, unwrap(std::forward<Arg1>(arg1)), unwrap(std::forward<Arg2>(arg2)), unwrap(std::forward<Arg3>(arg3))); \
 } \
 template <> inline constexpr std::string_view symbol_v<op::fn> = #fn;
 
@@ -141,7 +141,7 @@ struct ipow {
     decltype(auto) operator()(Arg1&& arg1) const
     {
         if constexpr (exp == 0) {
-            // TODO
+            static_assert(false, "Zero power not supported yet");
         }
         else if constexpr (exp == 1) {
             return arg1;
@@ -167,7 +167,7 @@ template<int exp, class Arg1>
     requires Expr<Arg1>
 constexpr auto ipow(Arg1&& arg1)
 {
-    return make_expr(op::ipow<exp>{}, std::forward<Arg1>(arg1));
+    return expr(op::ipow<exp>{}, unwrap(std::forward<Arg1>(arg1)));
 }
 
 } // namespace et

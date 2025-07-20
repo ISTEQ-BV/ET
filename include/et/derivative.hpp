@@ -21,23 +21,12 @@ namespace op {
     };
 }
 
-template<int i, typename T = double>
-struct var : et::expr<op::var<i>, T> {
-    var(const T& x)
-        : et::expr<op::var<i>, T>({}, x)
-    {}
-
-private:
-    friend std::ostream& operator<<(std::ostream& s, const var& v)
-    {
-        return s << "var<" << i << ">(" << v.arg1 << ")";
-    }
-};
+template<int i, typename T>
+auto var(T&& x) {
+    return et::expr(op::var<i>{}, std::forward<T>(x));
+}
 
 } // namespace autodiff
-
-template <int i, typename T>
-inline constexpr bool et::detail::is_expr<autodiff::var<i, T>> = true;
 
 namespace autodiff {
 
@@ -96,30 +85,25 @@ constexpr inline bool is_dependent<not_dependent> = false;
 
 template <typename Arg>
 constexpr auto unary_function_derivative(const et::op::sin& /*fn*/, Arg&& arg) {
-    return et::make_expr(et::op::cos{}, std::forward<Arg>(arg));
+    return et::expr(et::op::cos{}, std::forward<Arg>(arg));
 }
 
 template <typename Arg>
 constexpr auto unary_function_derivative(const et::op::cos& /*fn*/, Arg&& arg) {
-    return et::make_expr(et::op::negate{}, et::make_expr(et::op::sin{}, std::forward<Arg>(arg)));
-}
-
-template <typename Arg>
-constexpr auto unary_function_derivative(const et::op::tan& /*fn*/, Arg&& arg) {
-    return et::make_expr(et::op::negate{}, et::make_expr(et::op::sin{}, std::forward<Arg>(arg)));
+    return et::expr(et::op::negate{}, et::expr(et::op::sin{}, std::forward<Arg>(arg)));
 }
 
 template <int i, typename V>
 struct xform_derivative {
 
     template <int j, typename T>
-    constexpr auto operator ()(const var<j, T>& /* v */) const {
+    constexpr auto operator ()(const et::expr<op::var<j>, T>& /* v */) const {
         return not_dependent{};
     }
 
     template <typename T>
-    constexpr auto operator ()(const var<i, T>& /* v */) const {
-        return et::make_terminal(one<derivative_type<T, V>>{});
+    constexpr auto operator ()(const et::expr<op::var<i>, T>& /* v */) const {
+        return et::expr(one<derivative_type<T, V>>{});
     }
 
     template <typename T>
@@ -142,7 +126,7 @@ struct xform_derivative {
     constexpr auto operator ()(const et::expr<Func, Arg>& e) const {
         auto d = xform_derivative{}(e.arg1);
         if constexpr(is_dependent<decltype(d)>){
-            return et::make_expr(et::op::multiplies{}, unary_function_derivative(e.op, e.arg1), d);
+            return et::expr(et::op::multiplies{}, unary_function_derivative(e.op, e.arg1), d);
         }
         else {
             return not_dependent{};
@@ -171,7 +155,7 @@ struct xform_derivative {
     constexpr auto operator ()(const et::expr<et::op::ipow<exp>, Expr>& e) const {
         auto d = xform_derivative{}(e.arg1);
         if constexpr(is_dependent<decltype(d)>){
-            return et::make_terminal(exp) * ipow<exp-1>(e.arg1) * d;
+            return et::expr(exp) * ipow<exp-1>(e.arg1) * d;
         }
         else {
             return not_dependent{};
@@ -182,7 +166,7 @@ struct xform_derivative {
     constexpr auto operator ()(const et::expr<et::op::negate, Expr>& e) const {
         auto d = xform_derivative{}(e.arg1);
         if constexpr(is_dependent<decltype(d)>){
-            return et::make_expr(et::op::negate{}, d);
+            return et::expr(et::op::negate{}, d);
         }
         else {
             return not_dependent{};
@@ -195,7 +179,7 @@ struct xform_derivative {
         auto d2 = xform_derivative{}(e.arg2);
         if constexpr (is_dependent<decltype(d1)>) {
             if constexpr (is_dependent<decltype(d2)>) {
-                return d1 + d2;
+                return et::as_expr(d1) + d2;
             }
             else {
                 return d1;
@@ -217,7 +201,7 @@ struct xform_derivative {
         auto d2 = xform_derivative{}(e.arg2);
         if constexpr (is_dependent<decltype(d1)>) {
             if constexpr (is_dependent<decltype(d2)>) {
-                return d1 - d2;
+                return et::as_expr(d1) - d2;
             }
             else {
                 return d1;
@@ -239,15 +223,15 @@ struct xform_derivative {
         auto d2 = xform_derivative{}(e.arg2);
         if constexpr (is_dependent<decltype(d1)>) {
             if constexpr (is_dependent<decltype(d2)>) {
-                return d1 * e.arg2 + e.arg1 * d2;
+                return et::as_expr(d1) * e.arg2 + et::as_expr(e.arg1) * d2;
             }
             else {
-                return d1 * e.arg2;
+                return et::as_expr(d1) * e.arg2;
             }
         }
         else {
             if constexpr (is_dependent<decltype(d2)>) {
-                return e.arg1 * d2;
+                return et::as_expr(e.arg1) * d2;
             }
             else {
                 return not_dependent{};
@@ -279,7 +263,7 @@ struct xform_derivative {
 
     template <typename Pred, typename LHS, typename RHS>
     constexpr auto operator()(const et::expr<et::op::select, Pred, LHS, RHS>& e) const {
-        return et::make_expr(et::op::select{}, e.arg1, xform_derivative{}(e.arg2), xform_derivative{}(e.arg3));
+        return et::expr(et::op::select{}, e.arg1, xform_derivative{}(e.arg2), xform_derivative{}(e.arg3));
     }
 
 };
@@ -358,7 +342,7 @@ constexpr auto derivative(const E& e) {
 }
 
 template<int i, typename T, typename E>
-constexpr auto derivative(const E& e, const var<i, T>& /*v*/) {
+constexpr auto derivative(const E& e, const et::expr<op::var<i>, T>& /*v*/) {
     return et::as_expr(xform_derivative<i, T>{}(e));
 }
 

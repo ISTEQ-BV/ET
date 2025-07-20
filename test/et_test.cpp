@@ -5,6 +5,7 @@
 #include "et/print.hpp"
 #include "et/math.hpp"
 #include "et/graphviz.hpp"
+#include "et/placeholders.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -40,8 +41,37 @@ bool test_print_eval(const E& e, char const* repr, const V& v)
 }
 
 //test that expr can be used in consexpr context
-constexpr auto e = (et::make_terminal(1) + 2) * 3;
+constexpr auto e = (et::expr(1) + 2) * 3;
 constexpr int v [[maybe_unused]] = evaluate(e);
+
+int three = 3;
+const int four = 4;
+
+static_assert(std::is_same_v<decltype(et::expr(1)), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::expr(1)), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::expr(three)), et::expr<int&>>);
+static_assert(std::is_same_v<decltype(et::expr(four)), et::expr<const int&>>);
+static_assert(std::is_same_v<decltype(et::expr(std::move(four))), et::expr<const int>>);
+static_assert(std::is_same_v<decltype(et::expr(et::detail::copy(four))), et::expr<int>>);
+
+static_assert(std::is_same_v<decltype(et::unwrap(std::declval<et::expr<int>>())), int>);
+static_assert(std::is_same_v<decltype(et::unwrap(std::declval<et::expr<int&>>())), int&>);
+static_assert(std::is_same_v<decltype(et::unwrap(std::declval<et::expr<et::op::plus, int, int>>())), et::expr<et::op::plus, int, int>>);
+static_assert(std::is_same_v<decltype(et::unwrap(std::declval<et::expr<et::op::plus, int, int>&>())), et::expr<et::op::plus, int, int>>);
+
+static_assert(std::is_same_v<decltype(et::as_expr(7)), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::as_expr(three)), et::expr<int&>>);
+static_assert(std::is_same_v<decltype(et::as_expr(std::declval<et::expr<int>>())), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::as_expr(std::declval<et::expr<int&>>())), et::expr<int&>>);
+static_assert(std::is_same_v<decltype(et::as_expr(std::declval<et::expr<int>&>())), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::as_expr(std::declval<et::expr<int>&&>())), et::expr<int>>);
+
+static_assert(std::is_same_v<decltype(et::make_expr(1)), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::make_expr(1) + 2), et::expr<et::op::plus, int, int>>);
+static_assert(std::is_same_v<decltype(et::make_expr(three)), et::expr<int&>>);
+static_assert(std::is_same_v<decltype(et::make_expr(std::move(three))), et::expr<int>>);
+static_assert(std::is_same_v<decltype(et::make_expr(1) + three), et::expr<et::op::plus, int, int&>>);
+static_assert(std::is_same_v<decltype(et::make_expr(1) + std::move(three)), et::expr<et::op::plus, int, int>>);
 
 void test_placeholders() {
 
@@ -49,7 +79,7 @@ void test_placeholders() {
 
     static_assert(et::detail::Placeholder<decltype(_1)>);
 
-    auto e1 = et::make_terminal(_1) * _2 - _3;
+    auto e1 = et::expr(_1) * _2 - _3;
 
     et::tr::print{std::cout}(e1);
     std::cout << '\n';
@@ -73,25 +103,25 @@ void test_placeholders() {
     }
 
     std::ofstream dot("expr.dot");
-    et::write_dot_graph(dot, (et::make_terminal(_1) + _2) * _3 + _4);
+    et::write_dot_graph(dot, (et::expr(_1) + _2) * _3 + _4);
 }
 
 int main() {
-    test_print_eval(et::make_terminal(3), "identity(3)", 3);
+    test_print_eval(et::expr(3), "3", 3);
 
-    test_print_eval(et::make_terminal(3) + 7, "3 + 7", 10);
+    test_print_eval(et::expr(3) + 7, "3 + 7", 10);
 
-    test_print_eval((et::make_terminal(8) + 9) + 1, "(8 + 9) + 1", 18);
+    test_print_eval((et::expr(8) + 9) + 1, "(8 + 9) + 1", 18);
 
-    test_print_eval(1 + (et::make_terminal(8) + 9), "1 + (8 + 9)", 18);
+    test_print_eval(1 + (et::expr(8) + 9), "1 + (8 + 9)", 18);
 
-    test_print(1 * et::make_terminal(5) + "foo", "1 * 5 + foo");
+    test_print(1 * et::expr(5) + "foo", "1 * 5 + foo");
 
-    test_print(1 * (et::make_terminal(5) + "foo"), "1 * (5 + foo)");
+    test_print(1 * (et::expr(5) + "foo"), "1 * (5 + foo)");
 
-    test_print_eval(select(true, et::make_terminal(5) + 3, 35), "select(1, 5 + 3, 35)", 8);
+    test_print_eval(select(true, et::expr(5) + 3, 35), "select(1, 5 + 3, 35)", 8);
 
-    test_print_eval(sqrt(et::make_terminal(4.0)), "sqrt(4)", 2.0);
+    test_print_eval(sqrt(et::expr(4.0)), "sqrt(4)", 2.0);
 
     test_placeholders();
 }

@@ -46,7 +46,7 @@ template <> inline constexpr int op_priority<op::logical_or> = 15;
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-concept Streamable = requires (const T& x, std::ostream& s) {
+concept Streamable = requires (T&& x, std::ostream& s) {
     s << x;
 };
 
@@ -107,6 +107,16 @@ struct print {
             return  (stream << symbol_v<Op> << '(')
                    && print{stream, 17}(e.arg1)
                    && (stream << ')');
+        }
+    }
+
+    template<typename Arg>
+    bool operator()(const expr<Arg>& e) const {
+        if constexpr (detail::Streamable<Arg>) {
+            return static_cast<bool>(stream << e.arg);
+        }
+        else {
+            return static_cast<bool>(stream << "unprintable<" << type_name<Arg> << ">");
         }
     }
 
