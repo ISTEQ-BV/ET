@@ -4,8 +4,10 @@
 #include "et/derivative.hpp"
 
 #include "et/print.hpp"
+#include "et/graphviz.hpp"
 
 #include <cassert>
+#include <fstream>
 
 using namespace autodiff;
 
@@ -161,12 +163,12 @@ auto cons_from_prim(const T1& p, const T2& Ux, const T3& Uy, const T4& Uz, const
 }
 
 void test2() {
-    auto p = var<0>(140);
+    auto p = var<0>(100'000);
     auto Ux = var<1>(100);
     auto Uy = var<2>(0);
     auto Uz = var<3>(0);
     auto T = var<4>(300);
-    auto mu = var<5>(0.002);
+    auto mu = var<5>(0.029);
     auto Cv = var<6>(1000);
 
     std::cout << "p =  " << p  << '\n';
@@ -188,6 +190,19 @@ void test2() {
 
     auto drho_dp6 = transform_to_convergence(drho_dp, autodiff::propagate_const{});
     std::cout << "drho/dp = " << drho_dp6 << " = " << evaluate(drho_dp6) << '\n';
+
+    std::cout << "rho   = " << rho << " = " << evaluate(rho)  << '\n';
+    auto drho_dT = autodiff::derivative(rho, T);
+    std::cout << "drho/dT = " << drho_dT << " = " << evaluate(drho_dT) << '\n';
+
+    {
+        std::ofstream os("rho.dot");
+        write_dot_graph(os, rho);
+    }
+    {
+        std::ofstream os("drho_dT.dot");
+        write_dot_graph(os, drho_dT);
+    }
 
     auto drhoE_dT = autodiff::derivative(rhoE, T);
     std::cout << "drhoE/dT = " << drhoE_dT << '\n';

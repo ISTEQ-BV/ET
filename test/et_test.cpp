@@ -127,4 +127,8 @@ int main() {
     test_print_eval(sqrt(et::expr(4.0)), "sqrt(4)", 2.0);
 
     test_placeholders();
+
+    auto simple_expr = et::expr(3) + 7;
+    std::ofstream dot("simple_expr.dot");
+    et::write_dot_graph(dot, simple_expr);
 }
