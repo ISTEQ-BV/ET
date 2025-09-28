@@ -22,13 +22,15 @@ bool verify(bool x) {
 template<typename E>
 bool test_print(const E& e, char const* repr)
 {
-    std::ostringstream oss;
-    verify(et::tr::print{oss}(e));
-    std::cout << "Expression: " << oss.str() << '\n';
     std::cout << "Type:       " << et::type_name<E> << '\n';
+    std::ostringstream oss;
+    verify((bool)(oss << e));
+    std::cout << "Expression: \"" << oss.str() << "\"\n";
+    std::cout << "(expected): \"" << repr << "\"\n";
     verify(oss.str() == repr);
     std::cout << "Tree:\n";
     verify((bool)et::tr::debug(std::cout, e));
+    std::cout << '\n';
     return true;
 }
 
@@ -81,14 +83,15 @@ void test_placeholders() {
 
     auto e1 = et::expr(_1) * _2 - _3;
 
-    et::tr::print{std::cout}(e1);
-    std::cout << '\n';
+    std::cout << e1 << '\n';
+
+    auto terms = et::tr::terminals{}(e1);
+    std::cout << et::type_name<decltype(terms)> << '\n';
 
     auto e2 = replace_placeholders(e1, std::make_tuple(2, 3, 5));
 
-    std::cout << et::type_name<decltype(e2)> << std::endl;
-    et::tr::print{std::cout}(e2);
-    std::cout << '\n';
+    std::cout << et::type_name<decltype(e2)> << '\n';
+    std::cout << e2 << '\n';
 
     auto f = et::apply(e1, std::make_tuple(2, 3, 5));
 
