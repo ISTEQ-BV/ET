@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Ilya Popov
+
 #pragma once
 
 #include <tuple>
@@ -42,6 +45,8 @@ constexpr decltype(auto) replace_placeholders(E&& e, const Tuple& arguments) {
     });
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 template <typename E, typename... Args>
 constexpr decltype(auto) invoke(E&& e, Args&&... args) {
     return evaluate(replace_placeholders(e, std::forward_as_tuple(std::forward<Args>(args)...)));
@@ -51,5 +56,40 @@ template <typename E, typename Tuple>
 constexpr decltype(auto) apply(E&& e, Tuple&& t) {
     return evaluate(replace_placeholders(e, std::forward<Tuple>(t)));
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace tr {
+
+struct terminals {
+
+template <typename E>
+constexpr decltype(auto) operator()(E&& e) {
+    using E1 = std::remove_cvref_t<E>;
+    if constexpr (Expr<E1>) {
+        if constexpr (et::detail::arity<E1> == 0) {
+            return std::tuple<>();
+        }
+        else if constexpr (et::detail::arity<E1> == 1) {
+            return terminals{}(e.arg);
+        }
+        else if constexpr (et::detail::arity<E1> == 2) {
+            return std::tuple_cat(terminals{}(e.arg1), terminals{}(e.arg2));
+        }
+        else if constexpr (et::detail::arity<E1> == 3) {
+            return std::tuple_cat(terminals{}(e.arg1), terminals{}(e.arg2), terminals{}(e.arg3));
+        }
+        else {
+            static_assert(false, "Unknown arity");
+        }
+    }
+    else {
+        return std::forward_as_tuple(std::forward<E>(e));
+    }
+}
+
+};
+
+} // namespace tr
 
 }
