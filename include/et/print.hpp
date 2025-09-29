@@ -56,18 +56,18 @@ concept Streamable = requires (T&& x, std::ostream& s) {
 
 namespace tr {
 
+template<int priority = 17>
 struct print {
     std::ostream& stream;
-    int priority = 17;
 
     template<typename Op, typename Arg1, typename Arg2, typename Arg3>
     bool operator()(const expr<Op, Arg1, Arg2, Arg3> &e) const {
         return  (stream << symbol_v<Op> << '(')
-               && print{stream, 17}(e.arg1)
+               && print{stream}(e.arg1)
                && (stream << ", ")
-               && print{stream, 17}(e.arg2)
+               && print{stream}(e.arg2)
                && (stream << ", ")
-               && print{stream, 17}(e.arg3)
+               && print{stream}(e.arg3)
                && (stream << ')');
     }
 
@@ -75,24 +75,24 @@ struct print {
     bool operator()(const expr<Op, Arg1, Arg2>& e) const {
         if constexpr (is_infix_op_v<std::remove_cvref_t<Op>>) {
             constexpr int new_prio = detail::op_priority<std::remove_cvref_t<Op>>;
-            if (new_prio >= priority) {
+            if constexpr (new_prio >= priority) {
                 stream << '(';
             }
 
-            bool ok = print{stream, new_prio}(e.arg1)
+            bool ok = print<new_prio>{stream}(e.arg1)
                    && (stream << ' ' << symbol_v<Op> << ' ')
-                   && print{stream, new_prio}(e.arg2);
+                   && print<new_prio>{stream}(e.arg2);
 
-            if (ok && new_prio >= priority) {
-                return static_cast<bool>(stream << ')');
+            if constexpr (new_prio >= priority) {
+                return ok && static_cast<bool>(stream << ')');
             }
             return static_cast<bool>(stream);
         }
         else {
             return  (stream << symbol_v<Op> << '(')
-                   && print{stream, 17}(e.arg1)
+                   && print{stream}(e.arg1)
                    && (stream << ", ")
-                   && print{stream, 17}(e.arg2)
+                   && print{stream}(e.arg2)
                    && (stream << ')');
         }
     }
@@ -101,11 +101,11 @@ struct print {
     bool operator()(const expr<Op, Arg1>& e) const {
         if constexpr (is_prefix_op_v<std::remove_cvref_t<Op>>) {
             return (stream << symbol_v<Op>)
-                && print{stream, detail::op_priority<Op>}(e.arg1);
+                && print<detail::op_priority<Op>>{stream}(e.arg1);
         }
         else {
             return  (stream << symbol_v<Op> << '(')
-                   && print{stream, 17}(e.arg1)
+                   && print{stream}(e.arg1)
                    && (stream << ')');
         }
     }
@@ -182,7 +182,7 @@ inline std::ostream& debug(std::ostream& stream, const expr<Op, Args...>& e, int
 
 template<Expr E>
 inline std::ostream& operator<<(std::ostream& s, const E& e) {
-    tr::print{s, 17}(e);
+    tr::print{s}(e);
     return s;
 }
 
