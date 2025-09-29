@@ -116,7 +116,7 @@ struct print {
             return static_cast<bool>(stream << e.arg);
         }
         else {
-            return static_cast<bool>(stream << "unprintable<" << type_name<Arg> << ">");
+            return static_cast<bool>(stream << "unprintable<" << get_type_name<Arg>() << ">");
         }
     }
 
@@ -126,7 +126,7 @@ struct print {
             return static_cast<bool>(stream << value);
         }
         else {
-            return static_cast<bool>(stream << "unprintable<" << type_name<T> << ">");
+            return static_cast<bool>(stream << "unprintable<" << get_type_name<T>() << ">");
         }
     }
 };
@@ -139,7 +139,7 @@ std::ostream& print_expr_header_impl(std::ostream& s, int indent, std::string_vi
 
 template<typename Op>
 inline std::ostream& print_expr_header(std::ostream& s, int indent) {
-    return print_expr_header_impl(s, indent, et::symbol_v<Op>, type_name<Op>);
+    return print_expr_header_impl(s, indent, et::symbol_v<Op>, get_type_name<Op>());
 }
 
 std::ostream& print_terminal_impl(std::ostream& stream, int indent, std::string_view type_name);
@@ -151,7 +151,7 @@ std::ostream& print_terminal_impl(std::ostream& stream, int indent, std::string_
 template<typename T>
     requires (!Expr<T>)
 inline std::ostream& debug(std::ostream& stream, const T& value, int indent = 0) {
-    detail::print_terminal_impl(stream, indent, type_name<T>);
+    detail::print_terminal_impl(stream, indent, get_type_name<T>());
     if constexpr (et::detail::Streamable<T>) {
         return stream << " ( " << value << " )\n";
     }

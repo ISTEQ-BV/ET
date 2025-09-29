@@ -171,7 +171,7 @@ constexpr auto as_expr(T&& val)
 ////////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-inline constexpr std::string_view symbol_v = type_name<T>;
+inline constexpr auto symbol_v = get_type_name<T>();
 
 template <typename T>
 inline constexpr bool is_prefix_op_v = false;

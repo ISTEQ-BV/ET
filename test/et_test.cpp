@@ -22,7 +22,7 @@ bool verify(bool x) {
 template<typename E>
 bool test_print(const E& e, char const* repr)
 {
-    std::cout << "Type:       " << et::type_name<E> << '\n';
+    std::cout << "Type:       " << et::get_type_name<E>() << '\n';
     std::ostringstream oss;
     verify((bool)(oss << e));
     std::cout << "Expression: \"" << oss.str() << "\"\n";
@@ -86,11 +86,11 @@ void test_placeholders() {
     std::cout << e1 << '\n';
 
     auto terms = et::tr::terminals{}(e1);
-    std::cout << et::type_name<decltype(terms)> << '\n';
+    std::cout << et::get_type_name(terms) << '\n';
 
     auto e2 = replace_placeholders(e1, std::make_tuple(2, 3, 5));
 
-    std::cout << et::type_name<decltype(e2)> << '\n';
+    std::cout << et::get_type_name(e2) << '\n';
     std::cout << e2 << '\n';
 
     auto f = et::apply(e1, std::make_tuple(2, 3, 5));

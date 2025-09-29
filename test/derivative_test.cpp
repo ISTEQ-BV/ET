@@ -26,36 +26,36 @@ void foo() {
 
     auto z = x * t + y + x * y;
     std::cout << "z = " << z << '\n';
-    std::cout << "type_name(z) = " << et::type_name<decltype(z)> << '\n';
+    std::cout << "type_name(z) = " << et::get_type_name(z) << '\n';
     std::cout << '\n';
 
     auto dz_dx = derivative(z, x);
     std::cout << "dz/dx = " << dz_dx << '\n';
-    std::cout << "type_name(dz/dx) = " << et::type_name<decltype(dz_dx)> << '\n';
+    std::cout << "type_name(dz/dx) = " << et::get_type_name(dz_dx) << '\n';
     std::cout << '\n';
 
     auto z1 = et::transform_matching(z, propagate_const{});
     std::cout << "z1 = " << z1 << " = " << evaluate(z1) << '\n';
-    std::cout << "type_name(z1) = " << et::type_name<decltype(z1)> << '\n';
+    std::cout << "type_name(z1) = " << et::get_type_name(z1) << '\n';
     std::cout << '\n';
 
     auto s1 = et::transform_matching(dz_dx, propagate_const{});
     std::cout << "s1 = " << s1 /*<< " = " << evaluate(s1) */ << '\n';
-    std::cout << "type_name(s1) = " << et::type_name<decltype(s1)> << '\n';
+    std::cout << "type_name(s1) = " << et::get_type_name(s1) << '\n';
     std::cout << '\n';
 
     auto s2 = et::transform_matching(s1, propagate_const{});
     std::cout << "s2 = " << s2 << " = " << evaluate(s2) << '\n';
-    std::cout << "type_name(s2) = " << et::type_name<decltype(s2)> << '\n';
+    std::cout << "type_name(s2) = " << et::get_type_name(s2) << '\n';
     std::cout << '\n';
 
     auto s3 = et::transform_matching(s2, propagate_const{});
     std::cout << "s2 = " << s3 << " = " << evaluate(s3) << '\n';
-    std::cout << "type_name(s2) = " << et::type_name<decltype(s3)> << '\n';
+    std::cout << "type_name(s2) = " << et::get_type_name(s3) << '\n';
     std::cout << '\n';
 
     std::cout << "simplified = " << autodiff::transform_to_convergence(dz_dx, propagate_const{}) << '\n';
-    std::cout << "type_name(simplified) = " << et::type_name<decltype(autodiff::transform_to_convergence(dz_dx, propagate_const{}))> << '\n';
+    std::cout << "type_name(simplified) = " << et::get_type_name(autodiff::transform_to_convergence(dz_dx, propagate_const{})) << '\n';
     std::cout << '\n';
 
     auto w = x + 3;
