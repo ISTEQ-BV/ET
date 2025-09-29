@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10.0)
 
 project(et VERSION 0.1.0 LANGUAGES CXX)
 
+add_compile_options(-Wall -Wextra -fdiagnostics-color=always)
+
 add_library(et
     include/et/derivative.hpp
     include/et/expr.hpp
@@ -18,7 +20,6 @@ target_include_directories(et PUBLIC
 )
 
 target_compile_features(et PUBLIC cxx_std_20)
-target_compile_options(et PRIVATE -Wall -Wextra)
 
 add_executable(et_test
     test/et_test.cpp
@@ -26,7 +27,6 @@ add_executable(et_test
 target_link_libraries(et_test
     PRIVATE et
 )
-target_compile_options(et_test PRIVATE -g3 -Wall -Wextra -fdiagnostics-color=always -Wfatal-errors)
 
 add_executable(derivative_test
     test/derivative_test.cpp
@@ -34,4 +34,3 @@ add_executable(derivative_test
 target_link_libraries(derivative_test
     PRIVATE et
 )
-target_compile_options(derivative_test PRIVATE -g3 -Wall -Wextra -fdiagnostics-color=always -Wfatal-errors)
